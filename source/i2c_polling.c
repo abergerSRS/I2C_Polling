@@ -101,10 +101,9 @@ int main(void)
 
     /* Set up i2c master to send data to slave*/
     /* First data in txBuff is data length of the transmiting data. */
-    g_master_txBuff[0] = I2C_DATA_LENGTH - 1U;
-    for (uint32_t i = 1U; i < I2C_DATA_LENGTH; i++)
+    for (uint32_t i = 0; i < I2C_DATA_LENGTH; i++)
     {
-        g_master_txBuff[i] = i - 1;
+        g_master_txBuff[i] = 0xaa;
     }
 
     PRINTF("Master will send data :");
@@ -114,7 +113,7 @@ int main(void)
         {
             PRINTF("\r\n");
         }
-        PRINTF("0x%2x  ", g_master_txBuff[i + 1]);
+        PRINTF("0x%2x  ", g_master_txBuff[i]);
     }
     PRINTF("\r\n\r\n");
 
@@ -158,7 +157,7 @@ int main(void)
     /* Transfer completed. Check the data.*/
     for (uint32_t i = 0U; i < I2C_DATA_LENGTH - 1; i++)
     {
-        if (g_master_rxBuff[i] != g_master_txBuff[i + 1])
+        if (g_master_rxBuff[i] != g_master_txBuff[i])
         {
             PRINTF("\r\nError occured in the transfer ! \r\n");
             break;
