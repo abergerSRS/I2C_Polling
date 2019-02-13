@@ -50,7 +50,7 @@
 
 #define I2C_MASTER_SLAVE_ADDR_7BIT 0x50U
 #define I2C_BAUDRATE 100000U
-#define I2C_DATA_LENGTH 33U
+#define I2C_DATA_LENGTH 10U
 
 /*******************************************************************************
  * Prototypes
@@ -99,31 +99,6 @@ int main(void)
 
     PRINTF("\r\nI2C board2board polling example -- Master transfer.\r\n");
 
-    PRINTF("Initial data from slave :");
-
-   /* subAddress = 0x01, data = g_master_rxBuff - read from slave.
-	 start + slaveaddress(w) + subAddress + repeated start + slaveaddress(r) + rx data buffer + stop */
-    uint8_t deviceAddress = 0x40U;
-    masterXfer.slaveAddress = I2C_MASTER_SLAVE_ADDR_7BIT;
-    masterXfer.direction = kI2C_Read;
-    masterXfer.subaddress = (uint32_t)deviceAddress;
-    masterXfer.subaddressSize = 1;
-    masterXfer.data = g_master_rxBuff;
-    masterXfer.dataSize = I2C_DATA_LENGTH - 1;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
-
-    I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
-
-    for (uint32_t i = 0U; i < I2C_DATA_LENGTH - 1; i++)
-    {
-    	if (i % 8 == 0)
-    	{
-    		PRINTF("\r\n");
-    	}
-    	PRINTF("0x%2x  ", g_master_rxBuff[i]);
-    }
-    PRINTF("\r\n\r\n");
-
     /* Set up i2c master to send data to slave*/
     /* First data in txBuff is data length of the transmiting data. */
     g_master_txBuff[0] = I2C_DATA_LENGTH - 1U;
@@ -145,7 +120,7 @@ int main(void)
 
       /* subAddress = 0x01, data = g_master_txBuff - write to slave.
       start + slaveaddress(w) + subAddress + length of data buffer + data buffer + stop*/
-    deviceAddress = 0x00;
+    uint8_t deviceAddress = 0x00;
     masterXfer.slaveAddress = I2C_MASTER_SLAVE_ADDR_7BIT;
     masterXfer.direction = kI2C_Write;
     masterXfer.subaddress = (uint32_t)deviceAddress;
