@@ -50,7 +50,7 @@
 
 #define I2C_MASTER_SLAVE_ADDR_7BIT 0x50U
 #define I2C_BAUDRATE 100000U
-#define I2C_DATA_LENGTH 10U
+#define I2C_DATA_LENGTH 16U	// EEPROM page size
 
 /*******************************************************************************
  * Prototypes
@@ -103,7 +103,7 @@ int main(void)
     /* First data in txBuff is data length of the transmiting data. */
     for (uint32_t i = 0; i < I2C_DATA_LENGTH; i++)
     {
-        g_master_txBuff[i] = 0xaa;
+        g_master_txBuff[i] = i;
     }
 
     PRINTF("Master will send data :");
