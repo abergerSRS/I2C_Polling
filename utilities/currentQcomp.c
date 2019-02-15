@@ -1,6 +1,6 @@
 #include "currentQcomp.h"
 
-const frac16_t currentQcomp[100] = {
+const int16_t currentQcomp[100] = {
 		721,
 		814,
 		762,

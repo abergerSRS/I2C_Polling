@@ -3,9 +3,9 @@
 #ifndef CURRENTQCOMP_H
 #define CURRENTQCOMP_H
 
-#include "mlib_types.h"
+#include <stdint.h>
 
-extern const frac16_t currentQcomp[100]; // defined in angleComp.c
+extern const int16_t currentQcomp[100]; // defined in angleComp.c
 
 
 #endif /* ANGLECOMP_H */

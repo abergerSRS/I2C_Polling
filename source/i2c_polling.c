@@ -40,6 +40,9 @@
 #include "fsl_i2c.h"
 
 #include "pin_mux.h"
+
+/* Custom Included Files */
+#include "currentQcomp.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -52,6 +55,8 @@
 #define I2C_BAUDRATE 100000U
 #define I2C_DATA_LENGTH 16U	// EEPROM page size
 
+#define CAL_TABLE_SIZE 100U
+
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -62,7 +67,7 @@ void delay(unsigned int cycles);
  ******************************************************************************/
 
 uint8_t g_master_txBuff[I2C_DATA_LENGTH];
-uint8_t g_master_rxBuff[I2C_DATA_LENGTH];
+uint8_t g_master_rxBuff[200];
 volatile bool g_MasterCompletionFlag = false;
 
 /*******************************************************************************
@@ -97,40 +102,72 @@ int main(void)
 
     memset(&masterXfer, 0, sizeof(masterXfer));
 
+    /* subAddress = 0x01, data = g_master_txBuff - write to slave.
+       start + slaveaddress(w) + subAddress + length of data buffer + data buffer + stop*/
+     uint8_t deviceAddress = 0x00;
+     masterXfer.slaveAddress = I2C_MASTER_SLAVE_ADDR_7BIT;
+     masterXfer.direction = kI2C_Write;
+     masterXfer.subaddress = (uint32_t)deviceAddress;
+     masterXfer.subaddressSize = 1;
+     masterXfer.data = g_master_txBuff;
+     masterXfer.dataSize = I2C_DATA_LENGTH;
+     masterXfer.flags = kI2C_TransferDefaultFlag;
+
     PRINTF("\r\nI2C board2board polling example -- Master transfer.\r\n");
 
     /* Set up i2c master to send data to slave*/
     /* First data in txBuff is data length of the transmiting data. */
-    for (uint32_t i = 0; i < I2C_DATA_LENGTH; i++)
-    {
-        g_master_txBuff[i] = i;
-    }
+    int i;
+    int TxFillIndex;
 
-    PRINTF("Master will send data :");
-    for (uint32_t i = 0U; i < I2C_DATA_LENGTH - 1U; i++)
-    {
-        if (i % 8 == 0)
-        {
-            PRINTF("\r\n");
-        }
-        PRINTF("0x%2x  ", g_master_txBuff[i]);
-    }
-    PRINTF("\r\n\r\n");
+    /* data set to send is currentQcomp[] */
+    uint8_t elemCounter = 0;
+    uint8_t elemSize = sizeof(currentQcomp[0]);
+    uint8_t numElem = sizeof(currentQcomp)/elemSize;
 
-      /* subAddress = 0x01, data = g_master_txBuff - write to slave.
-      start + slaveaddress(w) + subAddress + length of data buffer + data buffer + stop*/
-    uint8_t deviceAddress = 0x00;
-    masterXfer.slaveAddress = I2C_MASTER_SLAVE_ADDR_7BIT;
-    masterXfer.direction = kI2C_Write;
-    masterXfer.subaddress = (uint32_t)deviceAddress;
-    masterXfer.subaddressSize = 1;
-    masterXfer.data = g_master_txBuff;
-    masterXfer.dataSize = I2C_DATA_LENGTH;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
+    do {
 
-    I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
+    	/* Fill the Tx buffer */
+		for(TxFillIndex = 0; TxFillIndex < I2C_DATA_LENGTH; TxFillIndex += elemSize) {
+
+			for (i = 0; i < elemSize; i++) {
+				if(elemCounter < numElem) {
+					g_master_txBuff[TxFillIndex + i] = (currentQcomp[elemCounter] >> i*8) & 0xff;
+				} else {
+					g_master_txBuff[TxFillIndex + i] = 0;
+				}
+			}
+
+			elemCounter++;
+			//if(elemCounter >= numElem) break;
+		}
+
+		/* Check the Tx buffer */
+		PRINTF("Master will send data :");
+		for (uint32_t i = 0U; i < I2C_DATA_LENGTH; i++)
+		{
+			if (i % 2 == 0)
+			{
+				PRINTF("\r\n");
+			}
+			PRINTF("0x%2x  ", g_master_txBuff[i]);
+		}
+		PRINTF("\r\n\r\n");
+
+		/* Send out current page */
+		// need to reinitialize any masterXfer values used as counters inside
+		// I2C_MasterTransferBlocking()
+		masterXfer.subaddress = (uint32_t)deviceAddress;
+		masterXfer.subaddressSize = 1;
+		masterXfer.dataSize = I2C_DATA_LENGTH;
+		I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
+		deviceAddress += I2C_DATA_LENGTH;
+
+    } while(elemCounter < numElem);
 
     PRINTF("Receive sent data from slave :");
+    // start reading from the zero-th element in the EEPROM
+    deviceAddress = 0x00;
 
     /* subAddress = 0x01, data = g_master_rxBuff - read from slave.
       start + slaveaddress(w) + subAddress + repeated start + slaveaddress(r) + rx data buffer + stop */
@@ -139,23 +176,30 @@ int main(void)
     masterXfer.subaddress = (uint32_t)deviceAddress;
     masterXfer.subaddressSize = 1;
     masterXfer.data = g_master_rxBuff;
-    masterXfer.dataSize = I2C_DATA_LENGTH - 1;
+    masterXfer.dataSize = elemSize*CAL_TABLE_SIZE;
     masterXfer.flags = kI2C_TransferDefaultFlag;
 
     I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
 
-    for (uint32_t i = 0U; i < I2C_DATA_LENGTH - 1; i++)
+    for (uint32_t i = 0U; i < elemSize*CAL_TABLE_SIZE; i++)
     {
-        if (i % 8 == 0)
+        if (i % 2 == 0)
         {
             PRINTF("\r\n");
         }
+
+        if (i % I2C_DATA_LENGTH == 0)
+        {
+        	PRINTF("\r\n");
+        }
+
         PRINTF("0x%2x  ", g_master_rxBuff[i]);
     }
     PRINTF("\r\n\r\n");
 
     /* Transfer completed. Check the data.*/
-    for (uint32_t i = 0U; i < I2C_DATA_LENGTH - 1; i++)
+    /*
+    for (uint32_t i = 0U; i < I2C_DATA_LENGTH; i++)
     {
         if (g_master_rxBuff[i] != g_master_txBuff[i])
         {
@@ -163,6 +207,7 @@ int main(void)
             break;
         }
     }
+    */
 
     PRINTF("\r\nEnd of I2C example .\r\n");
     uint8_t k = 0;
