@@ -42,6 +42,7 @@
 #include "pin_mux.h"
 
 /* Custom Included Files */
+#include "i2c_eeprom.h"
 #include "currentQcomp.h"
 #include "angleComp.h"
 /*******************************************************************************
@@ -52,7 +53,8 @@
 #define I2C_MASTER_CLK_FREQ CLOCK_GetFreq(I2C0_CLK_SRC)
 #define EXAMPLE_I2C_MASTER_BASEADDR I2C0
 
-#define I2C_MASTER_SLAVE_ADDR_7BIT 0x50U
+#define I2C_MASTER_SLAVE_ADDR_7BIT 	0x50U
+#define I2C_MEM_ADDR				0x50U
 #define I2C_BAUDRATE 100000U
 #define I2C_DATA_LENGTH 16U	// EEPROM page size
 
@@ -65,7 +67,7 @@ void delay(unsigned int cycles);
  * Variables
  ******************************************************************************/
 
-uint8_t g_master_txBuff[I2C_DATA_LENGTH];
+//uint8_t g_master_txBuff[I2C_DATA_LENGTH];
 uint8_t g_master_rxBuff[200];
 volatile bool g_MasterCompletionFlag = false;
 
@@ -108,61 +110,17 @@ int main(void)
      masterXfer.direction = kI2C_Write;
      masterXfer.subaddress = (uint32_t)deviceAddress;
      masterXfer.subaddressSize = 1;
-     masterXfer.data = g_master_txBuff;
-     masterXfer.dataSize = I2C_DATA_LENGTH;
+     //masterXfer.data = g_master_txBuff;
+     //masterXfer.dataSize = I2C_DATA_LENGTH;
      masterXfer.flags = kI2C_TransferDefaultFlag;
 
     PRINTF("\r\nI2C board2board polling example -- Master transfer.\r\n");
-
-    /* Set up i2c master to send data to slave*/
-    /* First data in txBuff is data length of the transmiting data. */
-    int i;
-    int TxFillIndex;
-
-    /* data set to send is currentQcomp[] */
-    uint8_t elemCounter = 0;
-    uint8_t elemSize = sizeof(currentQcomp[0]);
+	
+	uint8_t elemSize = sizeof(currentQcomp[0]);
     uint8_t numElem = sizeof(currentQcomp)/elemSize;
 
-    do {
-
-    	/* Fill the Tx buffer */
-		for(TxFillIndex = 0; TxFillIndex < I2C_DATA_LENGTH; TxFillIndex += elemSize) {
-
-			for (i = 0; i < elemSize; i++) {
-				if(elemCounter < numElem) {
-					g_master_txBuff[TxFillIndex + i] = (currentQcomp[elemCounter] >> i*8) & 0xff;
-				} else {
-					g_master_txBuff[TxFillIndex + i] = 0;
-				}
-			}
-
-			elemCounter++;
-			//if(elemCounter >= numElem) break;
-		}
-
-		/* Check the Tx buffer */
-		PRINTF("Master will send data :");
-		for (uint32_t i = 0U; i < I2C_DATA_LENGTH; i++)
-		{
-			if (i % 2 == 0)
-			{
-				PRINTF("\r\n");
-			}
-			PRINTF("0x%2x  ", g_master_txBuff[i]);
-		}
-		PRINTF("\r\n\r\n");
-
-		/* Send out current page */
-		// need to reinitialize any masterXfer values used as counters inside
-		// I2C_MasterTransferBlocking()
-		masterXfer.subaddress = (uint32_t)deviceAddress;
-		masterXfer.subaddressSize = 1;
-		masterXfer.dataSize = I2C_DATA_LENGTH;
-		I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
-		deviceAddress += I2C_DATA_LENGTH;
-
-    } while(elemCounter < numElem);
+    writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
+    
 
     PRINTF("Receive sent data from slave :");
     // start reading from the zero-th element in the EEPROM
