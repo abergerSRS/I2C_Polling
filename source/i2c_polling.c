@@ -43,6 +43,7 @@
 
 /* Custom Included Files */
 #include "currentQcomp.h"
+#include "angleComp.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -54,8 +55,6 @@
 #define I2C_MASTER_SLAVE_ADDR_7BIT 0x50U
 #define I2C_BAUDRATE 100000U
 #define I2C_DATA_LENGTH 16U	// EEPROM page size
-
-#define CAL_TABLE_SIZE 100U
 
 /*******************************************************************************
  * Prototypes
@@ -176,12 +175,12 @@ int main(void)
     masterXfer.subaddress = (uint32_t)deviceAddress;
     masterXfer.subaddressSize = 1;
     masterXfer.data = g_master_rxBuff;
-    masterXfer.dataSize = elemSize*CAL_TABLE_SIZE;
+    masterXfer.dataSize = elemSize*numElem;
     masterXfer.flags = kI2C_TransferDefaultFlag;
 
     I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
 
-    for (uint32_t i = 0U; i < elemSize*CAL_TABLE_SIZE; i++)
+    for (uint32_t i = 0U; i < elemSize*numElem; i++)
     {
         if (i % 2 == 0)
         {
