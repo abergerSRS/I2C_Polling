@@ -81,6 +81,7 @@ int main(void)
 {
     i2c_master_config_t masterConfig;
     uint32_t sourceClock;
+    status_t status = kStatus_Success;
 
     BOARD_InitPins();
     BOARD_BootClockRUN();
@@ -114,9 +115,8 @@ int main(void)
     	test_16bitdata[i] = i;
     }
 
-    //writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
-    writeDataToEEPROM(&test_16bitdata, numElem, elemSize, I2C_MEM_ADDR);
-    
+    status = writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
+    //status = writeDataToEEPROM(&test_16bitdata, numElem, elemSize, I2C_MEM_ADDR);
 
     PRINTF("Receive sent data from slave :");
     read16bitDataFromEEPROM(rcvd_16bitData, I2C_MEM_ADDR, firstWordAddress);
@@ -142,8 +142,8 @@ int main(void)
 		test_32bitdata[i] = i;
 	}
 
-	//writeDataToEEPROM(&angleComp, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
-	writeDataToEEPROM(&test_32bitdata, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
+	status = writeDataToEEPROM(&angleComp, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
+	//status = writeDataToEEPROM(&test_32bitdata, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
 
 
 	PRINTF("Receive sent data from slave :");

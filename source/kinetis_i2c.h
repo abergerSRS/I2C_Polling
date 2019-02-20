@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-void execute_I2C_transfer(void);
+int32_t execute_I2C_transfer(void);
 
 void initialize_I2C_transfer(void);
 void set_TransferFlags(uint32_t flags);

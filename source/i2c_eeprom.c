@@ -102,13 +102,14 @@ int writeDataToEEPROM(const void *srcData, uint16_t arraySize, uint16_t elemSize
 
 	dataIndex = 0;
 	uint32_t wordAddress = 0x00;
+	int32_t status = 0;
 	do{
 		fillTxBuffer(srcData, arraySize, elemSize_bytes);
 		set_slaveAddress(destAddress);
 		set_wordAddress(wordAddress);
 		set_bufferSize(PWB_SIZE);
 
-		execute_I2C_transfer();
+		status = execute_I2C_transfer();
 
 		wordAddress += PWB_SIZE;
 		if(wordAddress > 0xff) {

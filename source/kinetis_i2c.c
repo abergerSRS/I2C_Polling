@@ -4,12 +4,18 @@
 
 static i2c_master_transfer_t transfer;
 
-void execute_I2C_transfer(void)
+int32_t execute_I2C_transfer(void)
 {
+	int32_t status;
 	// wordAddressSize used as counter in I2C_MasterTransferBlocking
 	// so needs reset on each call
 	set_wordAddressSize(1);	// I think this handles word addresses >8-bit
-	I2C_MasterTransferBlocking(I2C0, &transfer);
+
+	do{
+		status = I2C_MasterTransferBlocking(I2C0, &transfer);
+	}while(status == kStatus_I2C_Addr_Nak);
+
+	return status;
 }
 
 void initialize_I2C_transfer(void)
