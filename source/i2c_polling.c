@@ -112,11 +112,11 @@ int main(void)
     uint16_t test_16bitdata[numElem];
     uint32_t i;
     for(i = 0; i<numElem; i++){
-    	test_16bitdata[i] = i;
+    	test_16bitdata[i] = 0xffff;
     }
 
-    status = writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
-    //status = writeDataToEEPROM(&test_16bitdata, numElem, elemSize, I2C_MEM_ADDR);
+    //status = writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
+    status = writeDataToEEPROM(&test_16bitdata, numElem, elemSize, I2C_MEM_ADDR);
 
     PRINTF("Receive sent data from slave :");
     read16bitDataFromEEPROM(rcvd_16bitData, I2C_MEM_ADDR, firstWordAddress);
@@ -139,11 +139,11 @@ int main(void)
 
 	uint32_t test_32bitdata[numElem];
 	for(i = 0; i<numElem; i++){
-		test_32bitdata[i] = i;
+		test_32bitdata[i] = 0xffffffff;
 	}
 
-	status = writeDataToEEPROM(&angleComp, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
-	//status = writeDataToEEPROM(&test_32bitdata, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
+	//status = writeDataToEEPROM(&angleComp, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
+	status = writeDataToEEPROM(&test_32bitdata, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
 
 
 	PRINTF("Receive sent data from slave :");
