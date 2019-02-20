@@ -52,7 +52,7 @@ static void convertBufferedBytesTo16Bit(int16_t *destArray, uint16_t destSize)
 	}
 }
 
-static void fillTxBuffer(void *srcData, uint16_t arraySize, uint16_t elemSize_bytes)
+static void fillTxBuffer(const void *srcData, uint16_t arraySize, uint16_t elemSize_bytes)
 {
 	uint32_t data;
 
@@ -68,7 +68,7 @@ static void fillTxBuffer(void *srcData, uint16_t arraySize, uint16_t elemSize_by
 	}
 }
 
-int writeDataToEEPROM(void *srcData, uint16_t arraySize, uint16_t elemSize_bytes, uint8_t destAddress)
+int writeDataToEEPROM(const void *srcData, uint16_t arraySize, uint16_t elemSize_bytes, uint8_t destAddress)
 {
 	initialize_I2C_transfer();
 	set_slaveAddress(destAddress);
