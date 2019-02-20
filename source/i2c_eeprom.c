@@ -58,7 +58,11 @@ static void fillTxBuffer(const void *srcData, uint16_t arraySize, uint16_t elemS
 
 	for(TxFillIndex=0; TxFillIndex<PWB_SIZE; TxFillIndex += elemSize_bytes) {
 		if(dataIndex < arraySize) {
-			data = ((uint16_t *)srcData)[dataIndex];
+			if(elemSize_bytes == 2) {
+				data = ((uint16_t *)srcData)[dataIndex];
+			} else if(elemSize_bytes == 4) {
+				data = ((uint32_t *)srcData)[dataIndex];
+			}
 			enqueueAsBytes(data,elemSize_bytes);
 			dataIndex++;
 		} else {
@@ -76,7 +80,7 @@ int writeDataToEEPROM(const void *srcData, uint16_t arraySize, uint16_t elemSize
 	set_bufferPointer(TxBuffer);
 
 	dataIndex = 0;
-	uint8_t wordAddress = 0x00;
+	uint32_t wordAddress = 0x00;
 	do{
 		fillTxBuffer(srcData, arraySize, elemSize_bytes);
 		set_wordAddress(wordAddress);

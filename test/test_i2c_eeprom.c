@@ -2,7 +2,8 @@
 #include "i2c_eeprom.h"
 #include "mock_kinetis_i2c.h"
 #include <stdint.h>
-#include "currentQcomp.h"
+#include "currentQcomp.h" 	// signed 16-bit test data
+#include "angleComp.h"		// unsigned 32-bit test data
 
 #define I2C_MEM_ADDR 0x50U
 
@@ -69,6 +70,38 @@ void test_write_16bit_testData_toEEPROM(void)
         TEST_ASSERT_EQUAL_HEX16(currentQcomp[firstElemOfTestData + i],
             (getByteFromTxBuffer(elemSize*i+1) << 8) | getByteFromTxBuffer(elemSize*i));
     }
+}
+
+void test_write_32bit_testData_toEEPROM(void)
+{
+	int errorCode = 1;
+	int elemSize = sizeof(angleComp[0]);
+	int arraySize = sizeof(angleComp)/elemSize;
+
+	int numberOfPages = 1 + ((elemSize*arraySize)-1)/PWB_SIZE;
+
+	initialize_I2C_transfer_Expect();
+	set_slaveAddress_Expect(I2C_MEM_ADDR);
+	set_directionAsWrite_Expect();
+	set_bufferPointer_Expect(TxBuffer);
+
+	for(int j=0; j<numberOfPages; j++) {
+		set_wordAddress_Expect(j*PWB_SIZE);
+		set_bufferSize_Expect(PWB_SIZE);
+		execute_I2C_transfer_Expect();
+	}
+
+	errorCode = writeDataToEEPROM(&angleComp,arraySize,elemSize,I2C_MEM_ADDR);
+
+	TEST_ASSERT_EQUAL(0,errorCode);
+
+	/* compare the data enqueued on the final TxBuffer */
+	int firstElemOfTestData = (numberOfPages-1)*PWB_SIZE/elemSize;
+	for(int i=0; i<PWB_SIZE/elemSize; i++) {
+		TEST_ASSERT_EQUAL_HEX32(angleComp[firstElemOfTestData + i],
+			((getByteFromTxBuffer(elemSize*i+3) << 24) | getByteFromTxBuffer(elemSize*i+2) << 16) |
+			(getByteFromTxBuffer(elemSize*i+1) << 8) | getByteFromTxBuffer(elemSize*i));
+	}
 }
 
 void test_read_16bit_testData_fromEEPROM(void)
