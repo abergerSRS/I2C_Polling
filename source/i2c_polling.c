@@ -52,11 +52,11 @@
 #define I2C_MASTER_CLK_SRC I2C0_CLK_SRC
 #define I2C_MASTER_CLK_FREQ CLOCK_GetFreq(I2C0_CLK_SRC)
 #define EXAMPLE_I2C_MASTER_BASEADDR I2C0
-
-#define I2C_MASTER_SLAVE_ADDR_7BIT 	0x50U
-#define I2C_MEM_ADDR				0x50U
 #define I2C_BAUDRATE 100000U
-#define I2C_DATA_LENGTH 16U	// EEPROM page size
+
+#define I2C_MEM_ADDR	0x50U
+
+
 
 /*******************************************************************************
  * Prototypes
@@ -67,9 +67,7 @@ void delay(unsigned int cycles);
  * Variables
  ******************************************************************************/
 
-//uint8_t g_master_txBuff[I2C_DATA_LENGTH];
-uint8_t g_master_rxBuff[200];
-volatile bool g_MasterCompletionFlag = false;
+int16_t rcvd_data[CAL_TABLE_SIZE];
 
 /*******************************************************************************
  * Code
@@ -82,7 +80,6 @@ int main(void)
 {
     i2c_master_config_t masterConfig;
     uint32_t sourceClock;
-    i2c_master_transfer_t masterXfer;
 
     BOARD_InitPins();
     BOARD_BootClockRUN();
@@ -96,61 +93,38 @@ int main(void)
 	*/
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = I2C_BAUDRATE;
-
     sourceClock = I2C_MASTER_CLK_FREQ;
-
     I2C_MasterInit(EXAMPLE_I2C_MASTER_BASEADDR, &masterConfig, sourceClock);
 
-    memset(&masterXfer, 0, sizeof(masterXfer));
-
-    /* subAddress = 0x01, data = g_master_txBuff - write to slave.
-       start + slaveaddress(w) + subAddress + length of data buffer + data buffer + stop*/
-     uint8_t deviceAddress = 0x00;
-     masterXfer.slaveAddress = I2C_MASTER_SLAVE_ADDR_7BIT;
-     masterXfer.direction = kI2C_Write;
-     masterXfer.subaddress = (uint32_t)deviceAddress;
-     masterXfer.subaddressSize = 1;
-     //masterXfer.data = g_master_txBuff;
-     //masterXfer.dataSize = I2C_DATA_LENGTH;
-     masterXfer.flags = kI2C_TransferDefaultFlag;
 
     PRINTF("\r\nI2C board2board polling example -- Master transfer.\r\n");
+
+    uint8_t firstWordAddress = 0x00;
+	read16bitDataFromEEPROM(rcvd_data, I2C_MEM_ADDR, firstWordAddress);
 	
 	uint8_t elemSize = sizeof(currentQcomp[0]);
     uint8_t numElem = sizeof(currentQcomp)/elemSize;
+
+    uint16_t test_data[numElem];
+    uint32_t i;
+    for(i = 0; i<numElem; i++){
+    	test_data[i] = i;
+    }
 
     writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
     
 
     PRINTF("Receive sent data from slave :");
-    // start reading from the zero-th element in the EEPROM
-    deviceAddress = 0x00;
+    read16bitDataFromEEPROM(rcvd_data, I2C_MEM_ADDR, firstWordAddress);
 
-    /* subAddress = 0x01, data = g_master_rxBuff - read from slave.
-      start + slaveaddress(w) + subAddress + repeated start + slaveaddress(r) + rx data buffer + stop */
-    masterXfer.slaveAddress = I2C_MASTER_SLAVE_ADDR_7BIT;
-    masterXfer.direction = kI2C_Read;
-    masterXfer.subaddress = (uint32_t)deviceAddress;
-    masterXfer.subaddressSize = 1;
-    masterXfer.data = g_master_rxBuff;
-    masterXfer.dataSize = elemSize*numElem;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
-
-    I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
-
-    for (uint32_t i = 0U; i < elemSize*numElem; i++)
+    for (i=0; i<CAL_TABLE_SIZE; i++)
     {
-        if (i % 2 == 0)
+        if (i % 10 == 0)
         {
             PRINTF("\r\n");
         }
 
-        if (i % I2C_DATA_LENGTH == 0)
-        {
-        	PRINTF("\r\n");
-        }
-
-        PRINTF("0x%2x  ", g_master_rxBuff[i]);
+        PRINTF("%d\r\n", rcvd_data[i]);
     }
     PRINTF("\r\n\r\n");
 

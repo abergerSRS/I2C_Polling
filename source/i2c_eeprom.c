@@ -25,9 +25,10 @@ void putByteIntoTxBuffer(uint16_t index, uint8_t byte)
 	TxBuffer[index] = byte;
 }
 
-uint16_t convert_2bytes_to_uint16(uint8_t LSByte, uint8_t MSByte)
+int16_t convert_2bytes_to_int16(uint8_t LSByte, uint8_t MSByte)
 {
 	return ((uint16_t)MSByte << 8) | (uint16_t)LSByte;
+
 }
 
 
@@ -39,7 +40,7 @@ static void enqueueAsBytes(uint32_t data, uint16_t dataSize_bytes)
 	}
 }
 
-static void convertBufferedBytesTo16Bit(uint16_t *destArray, uint16_t destSize)
+static void convertBufferedBytesTo16Bit(int16_t *destArray, uint16_t destSize)
 {
 	uint8_t byte1;
 	uint8_t byte2;
@@ -47,7 +48,7 @@ static void convertBufferedBytesTo16Bit(uint16_t *destArray, uint16_t destSize)
 	for(int i=0; i<destSize; i++) {
 		byte1 = RxBuffer_16[2*i];
 		byte2 = RxBuffer_16[2*i+1];
-		destArray[i] = convert_2bytes_to_uint16(byte1, byte2) ;
+		destArray[i] = convert_2bytes_to_int16(byte1, byte2) ;
 	}
 }
 

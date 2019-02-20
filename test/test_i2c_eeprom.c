@@ -63,16 +63,16 @@ void test_put_and_get_fromTxBuffer(void)
     TEST_ASSERT_EQUAL_HEX8(test_byte,getByteFromTxBuffer(index));
 }
 
-void test_convert_2bytes_to_uint16(void)
+void test_convert_2bytes_to_int16(void)
 {
     uint8_t LSB_8 = 0x1a;
     uint8_t MSB_8 = 0x37;
-    uint16_t exp_val = 0x371a; // MSB_8 << 8 | LSB_8
+    int16_t exp_val = 0x371a; // MSB_8 << 8 | LSB_8
 
-    uint16_t ret_val = 0;
-    ret_val = convert_2bytes_to_uint16(LSB_8, MSB_8);
+    int16_t ret_val = 0;
+    ret_val = convert_2bytes_to_int16(LSB_8, MSB_8);
 
-    TEST_ASSERT_EQUAL_HEX16(exp_val, ret_val);
+    TEST_ASSERT_EQUAL(exp_val, ret_val);
 }
 
 void test_write_16bit_testData_toEEPROM(void)
@@ -114,7 +114,7 @@ void test_read_16bit_testData_fromEEPROM(void)
 	int elemSize = sizeof(currentQcomp[0]);
 	int arraySize = sizeof(currentQcomp)/elemSize;
 
-	uint16_t rcvd_data[CAL_TABLE_SIZE];
+	int16_t rcvd_data[CAL_TABLE_SIZE];
 	uint32_t firstWord = 0x00;
 
 	initialize_I2C_transfer_Expect();
@@ -136,7 +136,7 @@ void test_read_16bit_testData_fromEEPROM(void)
 	TEST_ASSERT_EQUAL(0,errorCode);
 
 	for(int i=0; i<CAL_TABLE_SIZE; i++) {
-		TEST_ASSERT_EQUAL_HEX16(currentQcomp[i],rcvd_data[i]);
+		TEST_ASSERT_EQUAL(currentQcomp[i],rcvd_data[i]);
 	}
 
 }
