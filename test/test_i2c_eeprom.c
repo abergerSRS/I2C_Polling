@@ -9,6 +9,7 @@
 
 extern uint8_t TxBuffer[PWB_SIZE];
 extern uint8_t RxBuffer_16[2*CAL_TABLE_SIZE];
+extern uint8_t RxBuffer_32[4*CAL_TABLE_SIZE];
 
 void setUp(void)
 {
@@ -39,6 +40,21 @@ void test_convert_2bytes_to_int16(void)
 
     TEST_ASSERT_EQUAL(exp_val, ret_val);
 }
+
+void test_convert_4bytes_to_int32(void)
+{
+    uint8_t byte1 = 0x1a;
+    uint8_t byte2 = 0x37;
+    uint8_t byte3 = 0x45;
+    uint8_t byte4 = 0xdf;
+    int32_t exp_val = 0xdf45371a;
+
+    int32_t ret_val = 0;
+    ret_val = convert_4bytes_to_int32(byte1, byte2, byte3, byte4);
+
+    TEST_ASSERT_EQUAL(exp_val, ret_val);
+}
+
 
 void test_write_16bit_testData_toEEPROM(void)
 {
@@ -135,7 +151,40 @@ void test_read_16bit_testData_fromEEPROM(void)
 	for(int i=0; i<CAL_TABLE_SIZE; i++) {
 		TEST_ASSERT_EQUAL(currentQcomp[i],rcvd_data[i]);
 	}
-
 }
 
+void test_read_32bit_testData_fromEEPROM(void)
+{
+	int errorCode = 1;
+
+	int elemSize = sizeof(angleComp[0]);
+	int arraySize = sizeof(angleComp)/elemSize;
+
+	int32_t rcvd_data[CAL_TABLE_SIZE];
+	uint32_t firstWord = 0x00;
+
+	initialize_I2C_transfer_Expect();
+	set_slaveAddress_Expect(I2C_MEM_ADDR);
+	set_directionAsRead_Expect();
+	set_bufferPointer_Expect(RxBuffer_32);
+	set_wordAddress_Expect(firstWord);
+	set_bufferSize_Expect(4*CAL_TABLE_SIZE); // 2 bytes per 16-bit element
+	execute_I2C_transfer_Expect();
+
+	// simulate EEPROM reading, and saving data to RxBuffer_16
+	for(int i=0; i<CAL_TABLE_SIZE; i++) {
+		RxBuffer_32[4*i] = angleComp[i] & 0xff;
+		RxBuffer_32[4*i+1] = (angleComp[i] >> 8) & 0xff;
+		RxBuffer_32[4*i+2] = (angleComp[i] >> 16) & 0xff;
+		RxBuffer_32[4*i+3] = (angleComp[i] >> 24) & 0xff;
+	}
+
+	errorCode = read32bitDataFromEEPROM(&rcvd_data,I2C_MEM_ADDR,firstWord);
+
+	TEST_ASSERT_EQUAL(0,errorCode);
+
+	for(int i=0; i<CAL_TABLE_SIZE; i++) {
+		TEST_ASSERT_EQUAL((int32_t)angleComp[i],rcvd_data[i]);
+	}
+}
 
