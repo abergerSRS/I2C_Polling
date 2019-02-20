@@ -2,6 +2,7 @@
 #include "i2c_eeprom.h"
 #include "mock_kinetis_i2c.h"
 #include <stdint.h>
+#include "currentQcomp.h"
 
 #define I2C_MEM_ADDR 0x50U
 
@@ -62,6 +63,18 @@ void test_put_and_get_fromTxBuffer(void)
     TEST_ASSERT_EQUAL_HEX8(test_byte,getByteFromTxBuffer(index));
 }
 
+void test_convert_2bytes_to_uint16(void)
+{
+    uint8_t LSB_8 = 0x1a;
+    uint8_t MSB_8 = 0x37;
+    uint16_t exp_val = 0x371a; // MSB_8 << 8 | LSB_8
+
+    uint16_t ret_val = 0;
+    ret_val = convert_2bytes_to_uint16(LSB_8, MSB_8);
+
+    TEST_ASSERT_EQUAL_HEX16(exp_val, ret_val);
+}
+
 void test_write_16bit_testData_toEEPROM(void)
 {
     int errorCode = 1;
@@ -98,8 +111,8 @@ void test_read_16bit_testData_fromEEPROM(void)
 {
 	int errorCode = 1;
 
-	int elemSize = sizeof(test_data[0]);
-	int arraySize = sizeof(test_data)/elemSize;
+	int elemSize = sizeof(currentQcomp[0]);
+	int arraySize = sizeof(currentQcomp)/elemSize;
 
 	uint16_t rcvd_data[CAL_TABLE_SIZE];
 	uint32_t firstWord = 0x00;
@@ -113,14 +126,19 @@ void test_read_16bit_testData_fromEEPROM(void)
 	execute_I2C_transfer_Expect();
 
 	// simulate EEPROM reading, and saving data to RxBuffer_16
-	RxBuffer_16[0] = 0xd1;
-	RxBuffer_16[1] = 0x02;
+	for(int i=0; i<CAL_TABLE_SIZE; i++) {
+		RxBuffer_16[2*i] = currentQcomp[i] & 0xff;
+		RxBuffer_16[2*i+1] = (currentQcomp[i] >> 8) & 0xff;
+	}
 
 	errorCode = read16bitDataFromEEPROM(&rcvd_data,I2C_MEM_ADDR,firstWord);
 
 	TEST_ASSERT_EQUAL(0,errorCode);
 
-	TEST_ASSERT_EQUAL(test_data[0],rcvd_data[0]);
+	for(int i=0; i<CAL_TABLE_SIZE; i++) {
+		TEST_ASSERT_EQUAL_HEX16(currentQcomp[i],rcvd_data[i]);
+	}
+
 }
 
 
