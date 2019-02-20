@@ -73,7 +73,7 @@ void test_write_16bit_testData_toEEPROM(void)
     	set_slaveAddress_Expect(I2C_MEM_ADDR);
     	set_wordAddress_Expect(j*PWB_SIZE);
         set_bufferSize_Expect(PWB_SIZE);
-        execute_I2C_transfer_Expect();
+        execute_I2C_transfer_ExpectAndReturn(0);
     }
 
     errorCode = writeDataToEEPROM(&currentQcomp,arraySize,elemSize,I2C_MEM_ADDR);
@@ -106,7 +106,7 @@ void test_write_32bit_testData_toEEPROM(void)
 		set_slaveAddress_Expect(I2C_MEM_ADDR + blockNum);
 		set_wordAddress_Expect(wordAddress);
 		set_bufferSize_Expect(PWB_SIZE);
-		execute_I2C_transfer_Expect();
+		execute_I2C_transfer_ExpectAndReturn(0);
 		wordAddress += PWB_SIZE;
 		if(wordAddress > 0xff) {
 			wordAddress = 0;
@@ -143,7 +143,7 @@ void test_read_16bit_testData_fromEEPROM(void)
 	set_bufferPointer_Expect(RxBuffer_16);
 	set_wordAddress_Expect(firstWord);
 	set_bufferSize_Expect(2*CAL_TABLE_SIZE); // 2 bytes per 16-bit element
-	execute_I2C_transfer_Expect();
+	execute_I2C_transfer_ExpectAndReturn(0);
 
 	// simulate EEPROM reading, and saving data to RxBuffer_16
 	for(int i=0; i<CAL_TABLE_SIZE; i++) {
@@ -176,7 +176,7 @@ void test_read_32bit_testData_fromEEPROM(void)
 	set_bufferPointer_Expect(RxBuffer_32);
 	set_wordAddress_Expect(firstWord);
 	set_bufferSize_Expect(4*CAL_TABLE_SIZE); // 2 bytes per 16-bit element
-	execute_I2C_transfer_Expect();
+	execute_I2C_transfer_ExpectAndReturn(0);
 
 	// simulate EEPROM reading, and saving data to RxBuffer_16
 	for(int i=0; i<CAL_TABLE_SIZE; i++) {
