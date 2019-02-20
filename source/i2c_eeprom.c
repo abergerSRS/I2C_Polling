@@ -12,6 +12,9 @@ STATIC uint8_t TxBuffer[PWB_SIZE];
 STATIC uint16_t TxFillIndex = 0;
 STATIC uint16_t dataIndex = 0;
 
+STATIC uint8_t RxBuffer_16[2*CAL_TABLE_SIZE];
+
+
 /* Static helper functions */
 static void enqueueAsBytes(uint32_t data, uint16_t dataSize_bytes)
 {
@@ -19,6 +22,7 @@ static void enqueueAsBytes(uint32_t data, uint16_t dataSize_bytes)
 		putByteIntoTxBuffer(TxFillIndex + i, (data >> i*8) & 0xff);
 	}
 }
+
 
 static void fillTxBuffer(void *srcData, uint16_t arraySize, uint16_t elemSize_bytes)
 {
@@ -53,6 +57,23 @@ int writeDataToEEPROM(void *srcData, uint16_t arraySize, uint16_t elemSize_bytes
 		execute_I2C_transfer();
 		wordAddress += PWB_SIZE;
 	} while(dataIndex < arraySize);
+
+	return 0;
+}
+
+int read16bitDataFromEEPROM(void *receivedData, uint8_t srcAddress, uint32_t wordAddress)
+{
+	initialize_I2C_transfer();
+	set_slaveAddress(srcAddress);
+	set_directionAsRead();
+	set_bufferPointer(RxBuffer_16);
+	set_wordAddress(wordAddress);
+	set_bufferSize(2*CAL_TABLE_SIZE);
+
+	execute_I2C_transfer();
+
+	// convert RxBuffer_16 bytes to 16bit array elements
+	((uint16_t *)receivedData)[0] = RxBuffer_16[1] <<8 | RxBuffer_16[0];
 
 	return 0;
 }

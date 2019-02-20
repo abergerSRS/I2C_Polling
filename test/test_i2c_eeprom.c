@@ -6,6 +6,7 @@
 #define I2C_MEM_ADDR 0x50U
 
 extern uint8_t TxBuffer[PWB_SIZE];
+extern uint8_t RxBuffer_16[2*CAL_TABLE_SIZE];
 
 int16_t test_data[33] = {
     721,
@@ -51,6 +52,16 @@ void tearDown(void)
 {
 }
 
+void test_put_and_get_fromTxBuffer(void)
+{
+    uint8_t test_byte = 0x1a;
+    uint16_t index = 7;
+
+    putByteIntoTxBuffer(index, test_byte);
+
+    TEST_ASSERT_EQUAL_HEX8(test_byte,getByteFromTxBuffer(index));
+}
+
 void test_write_16bit_testData_toEEPROM(void)
 {
     int errorCode = 1;
@@ -83,12 +94,33 @@ void test_write_16bit_testData_toEEPROM(void)
     }
 }
 
-void test_put_and_get_fromTxBuffer(void)
+void test_read_16bit_testData_fromEEPROM(void)
 {
-    uint8_t test_byte = 0x1a;
-    uint16_t index = 7;
+	int errorCode = 1;
 
-    putByteIntoTxBuffer(index, test_byte);
+	int elemSize = sizeof(test_data[0]);
+	int arraySize = sizeof(test_data)/elemSize;
 
-    TEST_ASSERT_EQUAL_HEX8(test_byte,getByteFromTxBuffer(index));
+	uint16_t rcvd_data[CAL_TABLE_SIZE];
+	uint32_t firstWord = 0x00;
+
+	initialize_I2C_transfer_Expect();
+	set_slaveAddress_Expect(I2C_MEM_ADDR);
+	set_directionAsRead_Expect();
+	set_bufferPointer_Expect(RxBuffer_16);
+	set_wordAddress_Expect(firstWord);
+	set_bufferSize_Expect(2*CAL_TABLE_SIZE); // 2 bytes per 16-bit element
+	execute_I2C_transfer_Expect();
+
+	// simulate EEPROM reading, and saving data to RxBuffer_16
+	RxBuffer_16[0] = 0xd1;
+	RxBuffer_16[1] = 0x02;
+
+	errorCode = read16bitDataFromEEPROM(&rcvd_data,I2C_MEM_ADDR,firstWord);
+
+	TEST_ASSERT_EQUAL(0,errorCode);
+
+	TEST_ASSERT_EQUAL(test_data[0],rcvd_data[0]);
 }
+
+
