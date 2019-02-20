@@ -1,0 +1,4 @@
+:module_generator:
+  :project_root: ./
+  :source_root: source/
+  :test_root: test/
