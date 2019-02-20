@@ -97,7 +97,6 @@ static void fillTxBuffer(const void *srcData, uint16_t arraySize, uint16_t elemS
 int writeDataToEEPROM(const void *srcData, uint16_t arraySize, uint16_t elemSize_bytes, uint8_t destAddress)
 {
 	initialize_I2C_transfer();
-	set_slaveAddress(destAddress);
 	set_directionAsWrite();
 	set_bufferPointer(TxBuffer);
 
@@ -105,11 +104,17 @@ int writeDataToEEPROM(const void *srcData, uint16_t arraySize, uint16_t elemSize
 	uint32_t wordAddress = 0x00;
 	do{
 		fillTxBuffer(srcData, arraySize, elemSize_bytes);
+		set_slaveAddress(destAddress);
 		set_wordAddress(wordAddress);
 		set_bufferSize(PWB_SIZE);
-		/* send out current TxBuffer as a page of data */
+
 		execute_I2C_transfer();
+
 		wordAddress += PWB_SIZE;
+		if(wordAddress > 0xff) {
+			wordAddress = 0;
+			destAddress++;
+		}
 	} while(dataIndex < arraySize);
 
 	return 0;
@@ -126,7 +131,6 @@ int read16bitDataFromEEPROM(void *receivedData, uint8_t srcAddress, uint32_t wor
 
 	execute_I2C_transfer();
 
-	// convert RxBuffer_16 bytes to 16bit array elements
 	convertBufferedBytesTo16Bit(receivedData, CAL_TABLE_SIZE);
 
 	return 0;
@@ -139,11 +143,10 @@ int read32bitDataFromEEPROM(void *receivedData, uint8_t srcAddress, uint32_t wor
 	set_directionAsRead();
 	set_bufferPointer(RxBuffer_32);
 	set_wordAddress(wordAddress);
-	set_bufferSize(4*CAL_TABLE_SIZE);	// need 2 bytes per 16-bit element
+	set_bufferSize(4*CAL_TABLE_SIZE);	// need 4 bytes per 16-bit element
 
 	execute_I2C_transfer();
 
-	// convert RxBuffer_16 bytes to 16bit array elements
 	convertBufferedBytesTo32Bit(receivedData, CAL_TABLE_SIZE);
 
 	return 0;

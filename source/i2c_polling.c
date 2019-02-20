@@ -67,7 +67,8 @@ void delay(unsigned int cycles);
  * Variables
  ******************************************************************************/
 
-int16_t rcvd_data[CAL_TABLE_SIZE];
+int16_t rcvd_16bitData[CAL_TABLE_SIZE];
+int32_t rcvd_32bitData[CAL_TABLE_SIZE];
 
 /*******************************************************************************
  * Code
@@ -99,23 +100,26 @@ int main(void)
 
     PRINTF("\r\nI2C board2board polling example -- Master transfer.\r\n");
 
+    /* Test read/write 16-bit data ------------------------------------------ */
+
     uint8_t firstWordAddress = 0x00;
-	read16bitDataFromEEPROM(rcvd_data, I2C_MEM_ADDR, firstWordAddress);
+	read16bitDataFromEEPROM(rcvd_16bitData, I2C_MEM_ADDR, firstWordAddress);
 	
 	uint8_t elemSize = sizeof(currentQcomp[0]);
     uint8_t numElem = sizeof(currentQcomp)/elemSize;
 
-    uint16_t test_data[numElem];
+    uint16_t test_16bitdata[numElem];
     uint32_t i;
     for(i = 0; i<numElem; i++){
-    	test_data[i] = i;
+    	test_16bitdata[i] = i;
     }
 
-    writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
+    //writeDataToEEPROM(&currentQcomp, numElem, elemSize, I2C_MEM_ADDR);
+    writeDataToEEPROM(&test_16bitdata, numElem, elemSize, I2C_MEM_ADDR);
     
 
     PRINTF("Receive sent data from slave :");
-    read16bitDataFromEEPROM(rcvd_data, I2C_MEM_ADDR, firstWordAddress);
+    read16bitDataFromEEPROM(rcvd_16bitData, I2C_MEM_ADDR, firstWordAddress);
 
     for (i=0; i<CAL_TABLE_SIZE; i++)
     {
@@ -124,21 +128,49 @@ int main(void)
             PRINTF("\r\n");
         }
 
-        PRINTF("%d\r\n", rcvd_data[i]);
+        PRINTF("%d\r\n", rcvd_16bitData[i]);
     }
     PRINTF("\r\n\r\n");
 
-    /* Transfer completed. Check the data.*/
-    /*
-    for (uint32_t i = 0U; i < I2C_DATA_LENGTH; i++)
-    {
-        if (g_master_rxBuff[i] != g_master_txBuff[i])
-        {
-            PRINTF("\r\nError occured in the transfer ! \r\n");
-            break;
-        }
-    }
-    */
+    /* Test read/write 32-bit data ------------------------------------------ */
+    elemSize = sizeof(angleComp[0]);
+	numElem = sizeof(angleComp)/elemSize;
+	uint8_t pageNum = 0x01;
+
+	uint32_t test_32bitdata[numElem];
+	for(i = 0; i<numElem; i++){
+		test_32bitdata[i] = i;
+	}
+
+	//writeDataToEEPROM(&angleComp, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
+	writeDataToEEPROM(&test_32bitdata, numElem, elemSize, (I2C_MEM_ADDR | pageNum));
+
+
+	PRINTF("Receive sent data from slave :");
+	read32bitDataFromEEPROM(rcvd_32bitData, (I2C_MEM_ADDR | pageNum), firstWordAddress);
+
+	for (i=0; i<CAL_TABLE_SIZE; i++)
+	{
+		if (i % 10 == 0)
+		{
+			PRINTF("\r\n");
+		}
+
+		PRINTF("%d\r\n", rcvd_32bitData[i]);
+	}
+	PRINTF("\r\n\r\n");
+
+	/* Transfer completed. Check the data.*/
+	/*
+	for (uint32_t i = 0U; i < I2C_DATA_LENGTH; i++)
+	{
+		if (g_master_rxBuff[i] != g_master_txBuff[i])
+		{
+			PRINTF("\r\nError occured in the transfer ! \r\n");
+			break;
+		}
+	}
+	*/
 
     PRINTF("\r\nEnd of I2C example .\r\n");
     uint8_t k = 0;

@@ -66,12 +66,12 @@ void test_write_16bit_testData_toEEPROM(void)
     int numberOfPages = 1 + ((elemSize*arraySize)-1)/PWB_SIZE;
 
     initialize_I2C_transfer_Expect();
-    set_slaveAddress_Expect(I2C_MEM_ADDR);
     set_directionAsWrite_Expect();
     set_bufferPointer_Expect(TxBuffer);
 
     for(int j=0; j<numberOfPages; j++) {
-        set_wordAddress_Expect(j*PWB_SIZE);
+    	set_slaveAddress_Expect(I2C_MEM_ADDR);
+    	set_wordAddress_Expect(j*PWB_SIZE);
         set_bufferSize_Expect(PWB_SIZE);
         execute_I2C_transfer_Expect();
     }
@@ -97,14 +97,21 @@ void test_write_32bit_testData_toEEPROM(void)
 	int numberOfPages = 1 + ((elemSize*arraySize)-1)/PWB_SIZE;
 
 	initialize_I2C_transfer_Expect();
-	set_slaveAddress_Expect(I2C_MEM_ADDR);
 	set_directionAsWrite_Expect();
 	set_bufferPointer_Expect(TxBuffer);
 
+	int blockNum = 0;
+	uint32_t wordAddress = 0;
 	for(int j=0; j<numberOfPages; j++) {
-		set_wordAddress_Expect(j*PWB_SIZE);
+		set_slaveAddress_Expect(I2C_MEM_ADDR + blockNum);
+		set_wordAddress_Expect(wordAddress);
 		set_bufferSize_Expect(PWB_SIZE);
 		execute_I2C_transfer_Expect();
+		wordAddress += PWB_SIZE;
+		if(wordAddress > 0xff) {
+			wordAddress = 0;
+			blockNum++;
+		}
 	}
 
 	errorCode = writeDataToEEPROM(&angleComp,arraySize,elemSize,I2C_MEM_ADDR);
