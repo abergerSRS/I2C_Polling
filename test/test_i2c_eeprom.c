@@ -29,30 +29,30 @@ void test_put_and_get_fromTxBuffer(void)
     TEST_ASSERT_EQUAL_HEX8(test_byte,getByteFromTxBuffer(index));
 }
 
-void test_convert_2bytes_to_int16(void)
+void test_convert_Nbytes_to_int16(void)
 {
-    uint8_t LSB_8 = 0x1a;
-    uint8_t MSB_8 = 0x37;
-    int16_t exp_val = 0x371a; // MSB_8 << 8 | LSB_8
+	uint8_t bytes[4] = {0x01, 0x02, 0x03, 0x04};
 
-    int16_t ret_val = 0;
-    ret_val = convert_2bytes_to_int16(LSB_8, MSB_8);
+	int16_t ret_int16 = 0;
+	int16_t startIndex = 0;
 
-    TEST_ASSERT_EQUAL(exp_val, ret_val);
+	ret_int16 = convert_Nbytes_to_int(bytes, sizeof(ret_int16), startIndex);
+	TEST_ASSERT_EQUAL_HEX16(0x0201, ret_int16);
+
+	startIndex = 2;
+	ret_int16 = convert_Nbytes_to_int(bytes, sizeof(ret_int16), 2);
+	TEST_ASSERT_EQUAL_HEX16(0x0403, ret_int16);
 }
 
-void test_convert_4bytes_to_int32(void)
+void test_convert_Nbytes_to_int32(void)
 {
-    uint8_t byte1 = 0x1a;
-    uint8_t byte2 = 0x37;
-    uint8_t byte3 = 0x45;
-    uint8_t byte4 = 0xdf;
-    int32_t exp_val = 0xdf45371a;
+	uint8_t bytes[4] = {0x01, 0x02, 0x03, 0x04};
 
-    int32_t ret_val = 0;
-    ret_val = convert_4bytes_to_int32(byte1, byte2, byte3, byte4);
+	int32_t ret_int32 = 0;
+	int16_t startIndex = 0;
 
-    TEST_ASSERT_EQUAL(exp_val, ret_val);
+	ret_int32 = convert_Nbytes_to_int(bytes, sizeof(ret_int32), startIndex);
+	TEST_ASSERT_EQUAL_HEX32(0x04030201, ret_int32);
 }
 
 

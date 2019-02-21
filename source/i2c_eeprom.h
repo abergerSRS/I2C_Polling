@@ -15,6 +15,7 @@ uint8_t getByteFromTxBuffer(uint16_t index);
 void putByteIntoTxBuffer(uint16_t index, uint8_t byte);
 int16_t convert_2bytes_to_int16(uint8_t LSByte, uint8_t MSByte);
 int32_t convert_4bytes_to_int32(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint8_t byte4);
+int32_t convert_Nbytes_to_int(uint8_t srcBytes[], uint16_t elemSize_bytes, uint16_t startLoc);
 
 
 #endif // _I2C_EEPROM_H
